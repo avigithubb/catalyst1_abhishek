@@ -65,7 +65,8 @@ CORE RESTRICTIONS & GUARDRAILS:
       }
     };
 
-    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_KEY}`;
+    // Use official Gemini model (gemini-1.5-flash or gemini-2.0-flash)
+    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`;
 
     const res = await fetch(endpoint, {
       method: 'POST',
@@ -75,8 +76,8 @@ CORE RESTRICTIONS & GUARDRAILS:
 
     if (!res.ok) {
       const errText = await res.text();
-      console.error('[Gemini API Error]', errText);
-      throw new Error(`Gemini API request failed with status ${res.status}`);
+      console.error('[Gemini API Error]', res.status, errText);
+      throw new Error(`Gemini API error (${res.status}): ${errText}`);
     }
 
     const data = await res.json();

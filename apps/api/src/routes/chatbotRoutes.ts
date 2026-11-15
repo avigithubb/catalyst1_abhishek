@@ -1,11 +1,11 @@
 import { Router } from 'express';
 import { ChatbotController } from '../controllers/chatbotController';
-import { authenticateJwt } from '../middleware/auth';
+import { optionalAuthenticateJwt } from '../middleware/auth';
 
 const router = Router();
 
-// Apply JWT authentication so the chatbot knows which patient's context to inspect
-router.use(authenticateJwt);
+// Allow both logged-in users (grounded in medical dossier) and visitors
+router.use(optionalAuthenticateJwt);
 
 router.post('/ask', ChatbotController.ask);
 

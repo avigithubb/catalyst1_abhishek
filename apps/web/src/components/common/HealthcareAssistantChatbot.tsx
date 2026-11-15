@@ -187,23 +187,31 @@ export const HealthcareAssistantChatbot: React.FC = () => {
       // --- 7. GENERAL HEALTH / CLINICAL QUESTION (Dr. Gemini Backend) ---
       if (!botReply) {
         try {
+          const headers: Record<string, string> = {
+            'Content-Type': 'application/json',
+          };
           if (token) {
-            const response = await fetch('http://localhost:5000/api/chatbot/ask', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${token}`,
-              },
-              body: JSON.stringify({ question: userText }),
-            });
+            headers['Authorization'] = `Bearer ${token}`;
+          }
 
-            if (response.ok) {
-              const data = await response.json();
-              botReply = data.answer;
+          const response = await fetch('http://localhost:5000/api/chatbot/ask', {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({ question: userText }),
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            botReply = data.answer;
+          } else {
+            const errData = await response.json().catch(() => ({}));
+            console.warn('Backend chatbot returned error:', response.status, errData);
+            if (errData.message && errData.message.includes('API key')) {
+              botReply = `Gemini connection notice: ${errData.message}. Please verify your GEMINI_API_KEY.`;
             }
           }
-        } catch {
-          // Fall through to offline response
+        } catch (fetchErr) {
+          console.warn('Fetch to chatbot failed (backend offline?):', fetchErr);
         }
 
         if (!botReply) {
@@ -211,7 +219,7 @@ export const HealthcareAssistantChatbot: React.FC = () => {
             const done = exercises.filter((e) => e.completed);
             botReply = `You have completed ${done.length} of ${exercises.length} prescribed exercises today. Keep moving to maintain mobility!`;
           } else {
-            botReply = `Regarding your query "${userText}": Please ensure you maintain steady hydration and follow the dosage timing prescribed by your physician. Consult Dr. Miller for specific symptom changes.`;
+            botReply = `Regarding your query "${userText}": Please ensure you maintain steady hydration and follow the dosage timing prescribed by your physician. For specific symptom changes, consult Dr. Miller. (Note: Ensure the backend API server is running on port 5000 to connect with live Gemini AI).`;
           }
         }
       }
