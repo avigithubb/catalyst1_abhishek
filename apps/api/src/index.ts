@@ -27,8 +27,18 @@ app.use('/api/medications', medicationRoutes);
 app.use('/api/exercises', exerciseRoutes);
 app.use('/api/chatbot', chatbotRoutes);
 
-// Health check endpoint
-app.get('/api/health', (req, res) => {
+// Root & Health check endpoints
+app.get('/', (_req, res) => {
+  res.json({
+    status: 'online',
+    service: 'ElderCare Connect Backend API',
+    version: '1.0.0',
+    endpoints: ['/api/auth', '/api/medications', '/api/exercises', '/api/chatbot', '/api/health'],
+    timestamp: new Date().toISOString(),
+  });
+});
+
+app.get('/api/health', (_req, res) => {
   res.json({
     status: 'online',
     service: 'ElderCare Connect Backend API',
