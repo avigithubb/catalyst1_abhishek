@@ -8,7 +8,11 @@ import medicationRoutes from './routes/medicationRoutes';
 import exerciseRoutes from './routes/exerciseRoutes';
 import chatbotRoutes from './routes/chatbotRoutes';
 
+const initialEnv = process.env.NODE_ENV;
 dotenv.config({ path: path.resolve(__dirname, '../../../.env') });
+if (initialEnv) {
+  process.env.NODE_ENV = initialEnv;
+}
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -47,8 +51,10 @@ app.get('/api/health', (_req, res) => {
   });
 });
 
-app.listen(PORT, () => {
-  console.log(`ElderCare backend API server running on port ${PORT}`);
-});
+if (process.env.NODE_ENV !== 'test') {
+  app.listen(PORT, () => {
+    console.log(`ElderCare backend API server running on port ${PORT}`);
+  });
+}
 
 export default app;

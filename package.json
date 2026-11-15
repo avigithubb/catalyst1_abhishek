@@ -6,6 +6,7 @@
     "dev:web": "pnpm --filter web dev",
     "dev:api": "pnpm --filter api dev",
     "build": "pnpm -r run build",
+    "test": "pnpm --filter api test",
     "db:init": "pnpm --filter api db:init"
   },
   "devDependencies": {
