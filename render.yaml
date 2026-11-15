@@ -1,10 +1,3 @@
-databases:
-  - name: elderly-care-db
-    databaseName: elderly_care_db
-    user: elderly_care_admin
-    plan: free
-    region: oregon
-
 services:
   # 1. Backend API Service
   - type: web
@@ -21,9 +14,7 @@ services:
       - key: NODE_ENV
         value: production
       - key: DATABASE_URL
-        fromDatabase:
-          name: elderly-care-db
-          property: connectionString
+        sync: false
       - key: JWT_SECRET
         generateValue: true
       - key: BCRYPT_SALT_ROUNDS

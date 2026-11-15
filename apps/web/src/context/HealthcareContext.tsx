@@ -2,6 +2,10 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Medication, PatientProfile, DailyExercise } from '@elderly-care/shared-types';
 import { useAuth } from './AuthContext';
 
+const API_BASE = import.meta.env.VITE_API_URL
+  ? `https://${import.meta.env.VITE_API_URL}`
+  : '${API_BASE}';
+
 interface HealthcareContextType {
   profile: PatientProfile | null;
   medications: Medication[];
@@ -211,7 +215,7 @@ export const HealthcareProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     setIsLoading(true);
     try {
       if (token) {
-        const res = await fetch('http://localhost:5000/api/medications/daily', {
+        const res = await fetch('${API_BASE}/api/medications/daily', {
           headers: { Authorization: `Bearer ${token}` }
         });
         if (res.ok) {
@@ -281,7 +285,7 @@ export const HealthcareProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
     if (token) {
       try {
-        await fetch(`http://localhost:5000/api/medications/${medicationId}/toggle`, {
+        await fetch(`${API_BASE}/api/medications/${medicationId}/toggle`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -302,7 +306,7 @@ export const HealthcareProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
     if (token) {
       try {
-        await fetch(`http://localhost:5000/api/exercises/${exerciseId}/toggle`, {
+        await fetch(`${API_BASE}/api/exercises/${exerciseId}/toggle`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -328,7 +332,7 @@ export const HealthcareProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
     if (token) {
       try {
-        await fetch('http://localhost:5000/api/medications', {
+        await fetch('${API_BASE}/api/medications', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -344,7 +348,7 @@ export const HealthcareProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   const triggerAdherenceCronCheck = async (): Promise<{ sent: boolean; message: string }> => {
     try {
-      const res = await fetch('http://localhost:5000/api/medications/cron-check-adherence', {
+      const res = await fetch('${API_BASE}/api/medications/cron-check-adherence', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -3,7 +3,7 @@ import path from 'path';
 
 dotenv.config({ path: path.resolve(__dirname, '../../../../.env') });
 
-const GEMINI_KEY = process.env.GEMINI_API_URL || process.env.GEMINI_API_KEY || '';
+const GEMINI_KEY = process.env.GEMINI_API_KEY || '';
 
 export interface PatientLiveContext {
   patientName: string;
@@ -65,11 +65,11 @@ CORE RESTRICTIONS & GUARDRAILS:
       }
     };
 
-    // Candidate models in preference order: alias, latest version, and fallback
+    // Candidate models in preference order
     const candidateModels = [
-      'gemini-flash-latest',
-      'gemini-3.8-flash',
-      'gemini-pro-latest',
+      'gemini-2.0-flash',
+      'gemini-2.0-flash-lite',
+      'gemini-1.5-pro',
     ];
 
     let lastError: Error | null = null;
@@ -87,11 +87,12 @@ CORE RESTRICTIONS & GUARDRAILS:
           const data: any = await res.json();
           const candidate = data.candidates?.[0]?.content?.parts?.[0]?.text;
           if (candidate) {
+            console.log(`[Gemini] Successfully used model: ${modelName}`);
             return candidate;
           }
         } else {
           const errText = await res.text();
-          console.warn(`[Gemini API Warning] Model ${modelName} returned status ${res.status}: ${errText}`);
+          console.warn(`[Gemini API] Model ${modelName} → ${res.status}. Trying next...`);
           lastError = new Error(`Gemini API (${modelName} status ${res.status}): ${errText}`);
         }
       } catch (err: any) {

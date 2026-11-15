@@ -21,6 +21,10 @@ import { useAuth } from '@/context/AuthContext';
 import { useVoiceAssistant } from '@/hooks/useVoiceAssistant';
 import { ROUTES } from '@/routes/routeConfig';
 
+const API_BASE = import.meta.env.VITE_API_URL
+  ? `https://${import.meta.env.VITE_API_URL}`
+  : 'http://localhost:5000';
+
 interface ChatMessage {
   id: string;
   sender: 'user' | 'bot';
@@ -194,7 +198,7 @@ export const HealthcareAssistantChatbot: React.FC = () => {
             headers['Authorization'] = `Bearer ${token}`;
           }
 
-          const response = await fetch('http://localhost:5000/api/chatbot/ask', {
+          const response = await fetch(`${API_BASE}/api/chatbot/ask`, {
             method: 'POST',
             headers,
             body: JSON.stringify({ question: userText }),
