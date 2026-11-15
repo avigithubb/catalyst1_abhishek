@@ -1,7 +1,7 @@
 databases:
   - name: elderly-care-db
     databaseName: elderly_care_db
-    user: postgres
+    user: elderly_care_admin
     plan: free
     region: oregon
 
@@ -13,7 +13,7 @@ services:
     plan: free
     region: oregon
     rootDir: .
-    buildCommand: pnpm install --frozen-lockfile=false && pnpm --filter @elderly-care/shared-types build && pnpm --filter @elderly-care/shared-utils build && pnpm --filter api build
+    buildCommand: pnpm install --frozen-lockfile=false && pnpm --filter api build
     startCommand: node apps/api/dist/index.js
     envVars:
       - key: PORT
@@ -28,6 +28,8 @@ services:
         generateValue: true
       - key: BCRYPT_SALT_ROUNDS
         value: 10
+      - key: GEMINI_API_KEY
+        sync: false
       - key: SMTP_HOST
         value: smtp.mailtrap.io
       - key: SMTP_PORT
@@ -44,9 +46,8 @@ services:
     name: elderly-care-web
     runtime: static
     plan: free
-    region: oregon
     rootDir: .
-    buildCommand: pnpm install --frozen-lockfile=false && pnpm --filter @elderly-care/shared-types build && pnpm --filter @elderly-care/shared-utils build && pnpm --filter @elderly-care/ui build && pnpm --filter @elderly-care/api-client build && pnpm --filter web build
+    buildCommand: pnpm install --frozen-lockfile=false && pnpm --filter web build
     staticPublishPath: ./apps/web/dist
     routes:
       - type: rewrite
