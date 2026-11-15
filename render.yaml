@@ -45,7 +45,6 @@ services:
   - type: web
     name: elderly-care-web
     runtime: static
-    plan: free
     rootDir: .
     buildCommand: pnpm install --frozen-lockfile=false && pnpm --filter web build
     staticPublishPath: ./apps/web/dist
