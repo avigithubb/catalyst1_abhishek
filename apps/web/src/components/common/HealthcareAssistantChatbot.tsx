@@ -20,10 +20,7 @@ import { useHealthcare } from '@/context/HealthcareContext';
 import { useAuth } from '@/context/AuthContext';
 import { useVoiceAssistant } from '@/hooks/useVoiceAssistant';
 import { ROUTES } from '@/routes/routeConfig';
-
-const API_BASE = import.meta.env.VITE_API_URL
-  ? `https://${import.meta.env.VITE_API_URL}`
-  : 'http://localhost:5000';
+import { API_BASE } from '@/constants/api';
 
 interface ChatMessage {
   id: string;
@@ -212,6 +209,8 @@ export const HealthcareAssistantChatbot: React.FC = () => {
             console.warn('Backend chatbot returned error:', response.status, errData);
             if (errData.message && errData.message.includes('API key')) {
               botReply = `Gemini connection notice: ${errData.message}. Please verify your GEMINI_API_KEY.`;
+            } else if (errData.message) {
+              botReply = `Dr. Gemini notice: ${errData.message}`;
             }
           }
         } catch (fetchErr) {
@@ -223,7 +222,7 @@ export const HealthcareAssistantChatbot: React.FC = () => {
             const done = exercises.filter((e) => e.completed);
             botReply = `You have completed ${done.length} of ${exercises.length} prescribed exercises today. Keep moving to maintain mobility!`;
           } else {
-            botReply = `Regarding your query "${userText}": Please ensure you maintain steady hydration and follow the dosage timing prescribed by your physician. For specific symptom changes, consult Dr. Miller. (Note: Ensure the backend API server is running on port 5000 to connect with live Gemini AI).`;
+            botReply = `Regarding your query "${userText}": Please ensure you maintain steady hydration and follow the dosage timing prescribed by your physician. For specific symptom changes, consult Dr. Miller.`;
           }
         }
       }

@@ -1,10 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Medication, PatientProfile, DailyExercise } from '@elderly-care/shared-types';
 import { useAuth } from './AuthContext';
-
-const API_BASE = import.meta.env.VITE_API_URL
-  ? `https://${import.meta.env.VITE_API_URL}`
-  : '${API_BASE}';
+import { API_BASE } from '@/constants/api';
 
 interface HealthcareContextType {
   profile: PatientProfile | null;

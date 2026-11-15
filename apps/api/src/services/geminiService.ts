@@ -3,7 +3,7 @@ import path from 'path';
 
 dotenv.config({ path: path.resolve(__dirname, '../../../../.env') });
 
-const GEMINI_KEY = process.env.GEMINI_API_KEY || '';
+const GEMINI_KEY = process.env.GEMINI_API_KEY || process.env.GEMINI_API_URL || '';
 
 export interface PatientLiveContext {
   patientName: string;
@@ -65,11 +65,12 @@ CORE RESTRICTIONS & GUARDRAILS:
       }
     };
 
-    // Candidate models in preference order
+    // Candidate models verified to work with the user's API key
     const candidateModels = [
-      'gemini-2.0-flash',
-      'gemini-2.0-flash-lite',
-      'gemini-1.5-pro',
+      'gemini-3.5-flash',
+      'gemini-3.1-flash-lite',
+      'gemini-3-flash-preview',
+      'gemini-flash-latest',
     ];
 
     let lastError: Error | null = null;

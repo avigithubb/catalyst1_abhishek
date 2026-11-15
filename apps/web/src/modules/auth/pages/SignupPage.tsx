@@ -5,6 +5,7 @@ import { useToast } from '@/context/ToastContext';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Lock, Mail, User as UserIcon, KeyRound, AlertCircle, ArrowLeft } from 'lucide-react';
+import { API_BASE } from '@/constants/api';
 
 export const SignupPage: React.FC = () => {
   const [name, setName] = useState('');
@@ -26,7 +27,7 @@ export const SignupPage: React.FC = () => {
     const normalizedEmail = email.trim().toLowerCase();
 
     try {
-      const response = await fetch('http://localhost:5000/api/auth/register', {
+      const response = await fetch(`${API_BASE}/api/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: name.trim(), email: normalizedEmail, password, role, passcode }),

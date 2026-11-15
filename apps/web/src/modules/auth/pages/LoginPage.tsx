@@ -5,6 +5,7 @@ import { useToast } from '@/context/ToastContext';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Lock, User as UserIcon, KeyRound, AlertCircle, ArrowLeft } from 'lucide-react';
+import { API_BASE } from '@/constants/api';
 
 export const LoginPage: React.FC = () => {
   // Support either email OR username
@@ -24,7 +25,7 @@ export const LoginPage: React.FC = () => {
     setError(null);
 
     try {
-      const response = await fetch('http://localhost:5000/api/auth/login', {
+      const response = await fetch(`${API_BASE}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ identifier, password, passcode }),
@@ -69,7 +70,7 @@ export const LoginPage: React.FC = () => {
     try {
       // In a real environment, window.google.accounts.id or OAuth redirect handles this.
       // Here we authenticate via backend OAuth route using client credentials.
-      const response = await fetch('http://localhost:5000/api/auth/oauth/google', {
+      const response = await fetch(`${API_BASE}/api/auth/oauth/google`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
