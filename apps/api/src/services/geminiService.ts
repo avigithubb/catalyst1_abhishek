@@ -65,23 +65,40 @@ CORE RESTRICTIONS & GUARDRAILS:
       }
     };
 
-    // Use official Gemini model (gemini-1.5-flash or gemini-2.0-flash)
-    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`;
+    // Candidate models in preference order: alias, latest version, and fallback
+    const candidateModels = [
+      'gemini-flash-latest',
+      'gemini-3.8-flash',
+      'gemini-pro-latest',
+    ];
 
-    const res = await fetch(endpoint, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(promptPayload)
-    });
+    let lastError: Error | null = null;
 
-    if (!res.ok) {
-      const errText = await res.text();
-      console.error('[Gemini API Error]', res.status, errText);
-      throw new Error(`Gemini API error (${res.status}): ${errText}`);
+    for (const modelName of candidateModels) {
+      try {
+        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${GEMINI_KEY}`;
+        const res = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(promptPayload),
+        });
+
+        if (res.ok) {
+          const data: any = await res.json();
+          const candidate = data.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (candidate) {
+            return candidate;
+          }
+        } else {
+          const errText = await res.text();
+          console.warn(`[Gemini API Warning] Model ${modelName} returned status ${res.status}: ${errText}`);
+          lastError = new Error(`Gemini API (${modelName} status ${res.status}): ${errText}`);
+        }
+      } catch (err: any) {
+        lastError = err;
+      }
     }
 
-    const data = await res.json();
-    const candidate = data.candidates?.[0]?.content?.parts?.[0]?.text;
-    return candidate || "I am here to help with your medical care. Could you please rephrase your health question?";
+    throw lastError || new Error('All candidate Gemini models failed to respond');
   }
 };
