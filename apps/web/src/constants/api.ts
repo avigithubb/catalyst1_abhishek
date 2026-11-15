@@ -31,7 +31,7 @@ const getApiBase = (): string => {
       if (match && match[1]) {
         return `https://elderly-care-api-${match[1]}.onrender.com`;
       }
-      return 'https://elderly-care-api-ob1n.onrender.com';
+      return 'https://elderly-care-api-9rhg.onrender.com';
     }
   }
 
