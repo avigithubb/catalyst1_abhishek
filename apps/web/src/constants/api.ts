@@ -39,3 +39,8 @@ const getApiBase = (): string => {
 };
 
 export const API_BASE = getApiBase();
+
+export const GOOGLE_CLIENT_ID =
+  import.meta.env.VITE_GOOGLE_CLIENT_ID ||
+  '842528733087-bsioqsusspm1k8sbve7houv0n328chvr.apps.googleusercontent.com';
+

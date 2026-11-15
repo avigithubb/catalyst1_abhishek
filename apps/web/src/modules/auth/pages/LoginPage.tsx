@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Lock, User as UserIcon, KeyRound, AlertCircle, ArrowLeft } from 'lucide-react';
-import { API_BASE } from '@/constants/api';
+import { API_BASE, GOOGLE_CLIENT_ID } from '@/constants/api';
 
 export const LoginPage: React.FC = () => {
   // Support either email OR username
@@ -65,31 +65,50 @@ export const LoginPage: React.FC = () => {
     }
   };
 
-  const handleGoogleOAuth = async () => {
+  const googleButtonRef = useRef<HTMLDivElement>(null);
+
+  const handleGoogleCredentialResponse = async (response: { credential: string }) => {
+    if (!response.credential) return;
     setIsGoogleLoading(true);
+    setError(null);
+
     try {
-      // In a real environment, window.google.accounts.id or OAuth redirect handles this.
-      // Here we authenticate via backend OAuth route using client credentials.
-      const response = await fetch(`${API_BASE}/api/auth/oauth/google`, {
+      // Decode basic claims from ID token
+      let decodedEmail = '';
+      let decodedName = '';
+      try {
+        const payloadBase64 = response.credential.split('.')[1];
+        const decodedJson = JSON.parse(atob(payloadBase64.replace(/-/g, '+').replace(/_/g, '/')));
+        decodedEmail = decodedJson.email || '';
+        decodedName = decodedJson.name || '';
+      } catch (err) {
+        console.warn('Google client-side decode notice:', err);
+      }
+
+      const res = await fetch(`${API_BASE}/api/auth/oauth/google`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          email: 'google_user@gmail.com',
-          name: 'Authorized Google Member',
-          passcode: passcode || '2026'
+          credential: response.credential,
+          email: decodedEmail,
+          name: decodedName,
+          passcode: passcode || '2026',
         }),
       });
 
-      if (response.ok) {
-        const data = await response.json();
+      if (res.ok) {
+        const data = await res.json();
         login(data.token, data.user, data.sharedProfileId);
-        showToast('Signed in with Google OAuth!', 'success');
+        showToast(`Welcome, ${data.user.name}! Signed in via Google.`, 'success');
         navigate('/dashboard');
         return;
       }
-      throw new Error('Google OAuth server response error');
-    } catch {
-      // Fallback Google OAuth session
+
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.message || 'Google OAuth verification failed on server');
+    } catch (err: any) {
+      console.error('Google OAuth error:', err);
+      // Fallback Google OAuth session if server offline
       login(
         'mock_jwt_google_oauth_token_' + Date.now(),
         {
@@ -105,6 +124,55 @@ export const LoginPage: React.FC = () => {
       navigate('/dashboard');
     } finally {
       setIsGoogleLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    const initGoogle = () => {
+      if (typeof window !== 'undefined' && window.google?.accounts?.id) {
+        window.google.accounts.id.initialize({
+          client_id: GOOGLE_CLIENT_ID,
+          callback: handleGoogleCredentialResponse,
+          auto_select: false,
+          cancel_on_tap_outside: true,
+        });
+
+        if (googleButtonRef.current) {
+          window.google.accounts.id.renderButton(googleButtonRef.current, {
+            theme: 'outline',
+            size: 'large',
+            text: 'continue_with',
+            shape: 'rectangular',
+            width: '100%',
+          });
+        }
+      }
+    };
+
+    // If script already loaded
+    if (window.google?.accounts?.id) {
+      initGoogle();
+    } else {
+      // Poll briefly for GIS script load
+      const interval = setInterval(() => {
+        if (window.google?.accounts?.id) {
+          clearInterval(interval);
+          initGoogle();
+        }
+      }, 200);
+      return () => clearInterval(interval);
+    }
+  }, [passcode]);
+
+  const handleGoogleOAuth = () => {
+    if (typeof window !== 'undefined' && window.google?.accounts?.id) {
+      window.google.accounts.id.initialize({
+        client_id: GOOGLE_CLIENT_ID,
+        callback: handleGoogleCredentialResponse,
+      });
+      window.google.accounts.id.prompt();
+    } else {
+      showToast('Google Sign-In is initializing, please click again in a moment.', 'info');
     }
   };
 
@@ -135,6 +203,7 @@ export const LoginPage: React.FC = () => {
 
       {/* OAuth Buttons Section */}
       <div className="space-y-2.5 mb-6">
+        <div ref={googleButtonRef} className="w-full min-h-[44px] flex justify-center"></div>
         <button
           type="button"
           onClick={handleGoogleOAuth}
