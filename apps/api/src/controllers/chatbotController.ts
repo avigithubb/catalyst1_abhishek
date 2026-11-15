@@ -7,7 +7,7 @@ import { geminiService, PatientLiveContext } from '../services/geminiService';
 
 export const ChatbotController = {
   ask: async (req: AuthRequest, res: Response) => {
-    const { question } = req.body;
+    const { question, context } = req.body;
     const patientId = req.user?.patientProfileId || 'pat_101';
 
     if (!question || typeof question !== 'string' || !question.trim()) {
@@ -53,6 +53,23 @@ export const ChatbotController = {
       }
     } catch (dbErr) {
       console.warn('Could not load patient context from DB, proceeding without dossier:', dbErr);
+    }
+
+    // Fall back to client-provided context if not loaded from DB
+    if (!liveContext && context && typeof context === 'object') {
+      liveContext = {
+        patientName: context.patientName || 'Patient',
+        age: context.age || 70,
+        bloodPressure: context.bloodPressure || '120/80 mmHg',
+        heartRate: context.heartRate || 72,
+        bloodSugar: context.bloodSugar || '100 mg/dL',
+        streakDays: context.streakDays ?? 0,
+        totalMedications: context.totalMedications || 0,
+        takenMedications: Array.isArray(context.takenMedications) ? context.takenMedications : [],
+        pendingMedications: Array.isArray(context.pendingMedications) ? context.pendingMedications : [],
+        completedExercises: Array.isArray(context.completedExercises) ? context.completedExercises : [],
+        pendingExercises: Array.isArray(context.pendingExercises) ? context.pendingExercises : [],
+      };
     }
 
     try {

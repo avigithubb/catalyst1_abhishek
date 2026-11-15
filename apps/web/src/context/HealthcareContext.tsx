@@ -212,7 +212,7 @@ export const HealthcareProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     setIsLoading(true);
     try {
       if (token) {
-        const res = await fetch('${API_BASE}/api/medications/daily', {
+        const res = await fetch(`${API_BASE}/api/medications/daily`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         if (res.ok) {
@@ -329,7 +329,7 @@ export const HealthcareProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
     if (token) {
       try {
-        await fetch('${API_BASE}/api/medications', {
+        await fetch(`${API_BASE}/api/medications`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -345,7 +345,7 @@ export const HealthcareProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   const triggerAdherenceCronCheck = async (): Promise<{ sent: boolean; message: string }> => {
     try {
-      const res = await fetch('${API_BASE}/api/medications/cron-check-adherence', {
+      const res = await fetch(`${API_BASE}/api/medications/cron-check-adherence`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

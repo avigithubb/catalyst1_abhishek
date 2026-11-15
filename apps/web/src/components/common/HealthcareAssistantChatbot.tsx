@@ -73,16 +73,23 @@ export const HealthcareAssistantChatbot: React.FC = () => {
       setIsLoading(true);
       setActionAlert(null);
 
-      const lower = userText.toLowerCase();
+      const lower = userText.toLowerCase().trim();
       let botReply = '';
       let actionLabel = '';
 
-      // --- 1. VOICE COMMAND: MARK MEDICATION AS TAKEN ---
-      if (
-        (lower.includes('mark') || lower.includes('took') || lower.includes('taken') || lower.includes('done')) &&
-        (lower.includes('medicine') || lower.includes('pill') || lower.includes('dose') || medications.some(m => lower.includes(m.name.toLowerCase().split(' ')[0])))
-      ) {
-        // Find matching medication
+      // --- 1. ACTION COMMAND: MARK MEDICATION AS TAKEN ---
+      const isMarkMedTaken =
+        lower.startsWith('i took') ||
+        lower.startsWith('i have taken') ||
+        lower.startsWith('mark my') ||
+        lower.includes('mark as taken') ||
+        lower.includes('mark medication taken') ||
+        lower.includes('mark medicine taken') ||
+        lower.includes('took my pill') ||
+        lower.includes('took my medicine');
+
+      if (isMarkMedTaken) {
+        // Find matching medication by name or schedule
         const matchedMed = medications.find((m) =>
           lower.includes(m.name.toLowerCase().split(' ')[0]) ||
           (lower.includes('morning') && m.scheduledTime.includes('AM')) ||
@@ -99,7 +106,6 @@ export const HealthcareAssistantChatbot: React.FC = () => {
             botReply = `Your ${matchedMed.name} was already marked as taken today! You are all set.`;
           }
         } else {
-          // If user just said "I took my medicine", pick the next pending one
           const nextPending = medications.find((m) => m.status !== 'taken');
           if (nextPending) {
             await toggleMedicationStatus(nextPending.id);
@@ -111,45 +117,12 @@ export const HealthcareAssistantChatbot: React.FC = () => {
         }
       }
 
-      // --- 2. VOICE COMMAND: WHAT MEDICATIONS ARE PENDING / DUE ---
+      // --- 2. ACTION COMMAND: WEBSITE NAVIGATION ---
       else if (
-        (lower.includes('pending') || lower.includes('due') || lower.includes('left') || lower.includes('what medicine') || lower.includes('which medicine')) &&
-        (lower.includes('pill') || lower.includes('medication') || lower.includes('medicine') || lower.includes('today'))
-      ) {
-        const pending = medications.filter((m) => m.status !== 'taken');
-        if (pending.length > 0) {
-          const list = pending.map((p) => `${p.name} at ${p.scheduledTime} (${p.foodRelation})`).join(', ');
-          botReply = `You have ${pending.length} medication${pending.length > 1 ? 's' : ''} left today: ${list}. Please remember to take them on schedule.`;
-        } else {
-          botReply = "Wonderful news! You have taken all your scheduled medications for today. Your streak is completely protected!";
-        }
-      }
-
-      // --- 3. VOICE COMMAND: CHECK STREAK ---
-      else if (lower.includes('streak') || lower.includes('adherence')) {
-        botReply = `Your adherence streak is currently ${streakDays} continuous days! Keeping this streak unbroken protects your health and avoids alert emails to your caregivers.`;
-      }
-
-      // --- 4. VOICE COMMAND: CHECK VITALS / HEALTH STATS ---
-      else if (
-        lower.includes('blood pressure') ||
-        lower.includes('vital') ||
-        lower.includes('heart rate') ||
-        lower.includes('sugar') ||
-        lower.includes('pulse')
-      ) {
-        const bp = profile?.vitalSigns.bloodPressure || '124/82 mmHg';
-        const hr = profile?.vitalSigns.heartRate || 72;
-        const sugar = profile?.vitalSigns.bloodSugar || '110 mg/dL';
-        botReply = `Here are your current vital signs: Blood pressure is ${bp}, heart rate is ${hr} beats per minute, and blood sugar is ${sugar}. All indicators are currently within stable range.`;
-      }
-
-      // --- 5. VOICE COMMAND: WEBSITE NAVIGATION ---
-      else if (
-        lower.includes('go to') ||
-        lower.includes('open') ||
-        lower.includes('show') ||
-        lower.includes('navigate')
+        lower.startsWith('go to') ||
+        lower.startsWith('navigate to') ||
+        lower.startsWith('open ') ||
+        lower.startsWith('show ')
       ) {
         if (lower.includes('exercise') || lower.includes('workout') || lower.includes('yoga') || lower.includes('walk')) {
           navigate(ROUTES.EXERCISES);
@@ -170,10 +143,14 @@ export const HealthcareAssistantChatbot: React.FC = () => {
         }
       }
 
-      // --- 6. VOICE COMMAND: MARK EXERCISE AS COMPLETED ---
+      // --- 3. ACTION COMMAND: MARK EXERCISE AS COMPLETED ---
       else if (
-        (lower.includes('finished') || lower.includes('completed') || lower.includes('did')) &&
-        (lower.includes('walk') || lower.includes('yoga') || lower.includes('breathing') || lower.includes('exercise'))
+        lower.startsWith('i finished') ||
+        lower.startsWith('i completed') ||
+        lower.startsWith('mark exercise') ||
+        lower.includes('finished my walk') ||
+        lower.includes('finished my yoga') ||
+        lower.includes('completed my exercise')
       ) {
         const nextExercise = exercises.find((e) => !e.completed);
         if (nextExercise) {
@@ -185,7 +162,7 @@ export const HealthcareAssistantChatbot: React.FC = () => {
         }
       }
 
-      // --- 7. GENERAL HEALTH / CLINICAL QUESTION (Dr. Gemini Backend) ---
+      // --- 4. CLINICAL & HEALTH AI ASSISTANT (Dr. Gemini AI with Live Patient Dossier) ---
       if (!botReply) {
         try {
           const headers: Record<string, string> = {
@@ -195,10 +172,25 @@ export const HealthcareAssistantChatbot: React.FC = () => {
             headers['Authorization'] = `Bearer ${token}`;
           }
 
+          // Build live patient context to send with query
+          const liveContext = {
+            patientName: profile?.fullName || 'Patient',
+            age: profile?.age || 74,
+            bloodPressure: profile?.vitalSigns.bloodPressure || '124/82 mmHg',
+            heartRate: profile?.vitalSigns.heartRate || 72,
+            bloodSugar: profile?.vitalSigns.bloodSugar || '110 mg/dL',
+            streakDays: streakDays,
+            totalMedications: medications.length,
+            takenMedications: medications.filter((m) => m.status === 'taken').map((m) => `${m.name} (${m.dosage})`),
+            pendingMedications: medications.filter((m) => m.status !== 'taken').map((m) => `${m.name} (${m.dosage}) at ${m.scheduledTime}`),
+            completedExercises: exercises.filter((e) => e.completed).map((e) => `${e.title} (${e.durationMinutes} mins)`),
+            pendingExercises: exercises.filter((e) => !e.completed).map((e) => `${e.title} (${e.durationMinutes} mins)`),
+          };
+
           const response = await fetch(`${API_BASE}/api/chatbot/ask`, {
             method: 'POST',
             headers,
-            body: JSON.stringify({ question: userText }),
+            body: JSON.stringify({ question: userText, context: liveContext }),
           });
 
           if (response.ok) {
@@ -210,20 +202,16 @@ export const HealthcareAssistantChatbot: React.FC = () => {
             if (errData.message && errData.message.includes('API key')) {
               botReply = `Gemini connection notice: ${errData.message}. Please verify your GEMINI_API_KEY.`;
             } else if (errData.message) {
-              botReply = `Dr. Gemini notice: ${errData.message}`;
+              botReply = `Dr. Gemini: ${errData.message}`;
             }
           }
-        } catch (fetchErr) {
+        } catch (fetchErr: any) {
           console.warn('Fetch to chatbot failed (backend offline?):', fetchErr);
+          botReply = `I was unable to connect to the healthcare service at ${API_BASE}. Please ensure the server is online.`;
         }
 
         if (!botReply) {
-          if (lower.includes('exercise')) {
-            const done = exercises.filter((e) => e.completed);
-            botReply = `You have completed ${done.length} of ${exercises.length} prescribed exercises today. Keep moving to maintain mobility!`;
-          } else {
-            botReply = `Regarding your query "${userText}": Please ensure you maintain steady hydration and follow the dosage timing prescribed by your physician. For specific symptom changes, consult Dr. Miller.`;
-          }
+          botReply = `Regarding your query "${userText}": Please ensure you maintain steady hydration and follow the dosage timing prescribed by your physician. For specific symptom changes, consult your primary doctor.`;
         }
       }
 
