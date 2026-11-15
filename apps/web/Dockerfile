@@ -18,10 +18,6 @@ RUN pnpm install --frozen-lockfile=false
 
 COPY . .
 
-RUN pnpm --filter @elderly-care/shared-types build
-RUN pnpm --filter @elderly-care/shared-utils build
-RUN pnpm --filter @elderly-care/ui build
-RUN pnpm --filter @elderly-care/api-client build
 RUN pnpm --filter web build
 
 # Stage 2: Serve with lightweight high-performance Nginx

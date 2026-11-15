@@ -21,11 +21,7 @@ RUN pnpm install --frozen-lockfile=false
 # 4. Copy source code
 COPY . .
 
-# 5. Build all packages and applications
-RUN pnpm --filter @elderly-care/shared-types build
-RUN pnpm --filter @elderly-care/shared-utils build
-RUN pnpm --filter @elderly-care/ui build
-RUN pnpm --filter @elderly-care/api-client build
+# 5. Build all applications
 RUN pnpm --filter api build
 RUN pnpm --filter web build
 

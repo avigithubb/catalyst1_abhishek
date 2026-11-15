@@ -18,8 +18,6 @@ RUN pnpm install --frozen-lockfile=false
 
 COPY . .
 
-RUN pnpm --filter @elderly-care/shared-types build
-RUN pnpm --filter @elderly-care/shared-utils build
 RUN pnpm --filter api build
 
 FROM node:20-alpine AS runner
