@@ -418,7 +418,7 @@ export const HealthcareAssistantChatbot: React.FC = () => {
                       : 'bg-white border border-slate-100 text-slate-800 rounded-bl-none'
                   }`}
                 >
-                  <p>{msg.text}</p>
+                  <p className="whitespace-pre-line leading-relaxed">{msg.text}</p>
                   {msg.actionTaken && (
                     <div className="mt-1.5 pt-1 border-t border-slate-100 flex items-center gap-1 text-[10px] text-emerald-600 font-semibold">
                       <CheckCircle2 className="w-3 h-3" />
