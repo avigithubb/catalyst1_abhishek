@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+  # 1. PostgreSQL Database Service
+  postgres:
+    image: postgres:15-alpine
+    container_name: elderly_care_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: Postors
+      POSTGRES_DB: elderly_care_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./apps/api/src/db/schema.sql:/docker-entrypoint-initdb.d/01_schema.sql
+    networks:
+      - eldercare-network
+
+  # 2. Backend REST API Service
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: elderly_care_api
+    restart: always
+    depends_on:
+      - postgres
+    environment:
+      PORT: 5000
+      NODE_ENV: production
+      DATABASE_URL: postgres://postgres:Postors@postgres:5432/elderly_care_db
+      JWT_SECRET: super_secret_elderly_care_jwt_key_2026_xyz
+      SMTP_HOST: smtp.mailtrap.io
+      SMTP_PORT: 2525
+    ports:
+      - "5000:5000"
+    networks:
+      - eldercare-network
+
+  # 3. Frontend Web Service (Nginx + React)
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    container_name: elderly_care_web
+    restart: always
+    depends_on:
+      - api
+    ports:
+      - "3000:80"
+    networks:
+      - eldercare-network
+
+volumes:
+  pgdata:
+
+networks:
+  eldercare-network:
+    driver: bridge
